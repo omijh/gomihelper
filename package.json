@@ -6,6 +6,7 @@
     "build": "next build",
     "export": "next export -o out",
     "start": "npx serve out",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "update:data": "ts-node scripts/update-data.ts",
     "postinstall": "node scripts/setup-next-export.js"
   },
@@ -17,6 +18,8 @@
   "devDependencies": {
     "@types/node": "^20.12.12",
     "@types/react": "^18.2.66",
+    "eslint": "^9.38.0",
+    "eslint-config-next": "^16.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   }

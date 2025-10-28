@@ -1,0 +1,382 @@
+.page {
+  display: flex;
+  justify-content: center;
+  padding: 56px 24px 80px;
+  position: relative;
+}
+
+.surface {
+  width: min(1080px, 100%);
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 32px;
+}
+
+@media (max-width: 960px) {
+  .surface {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sidebar {
+  background: var(--card-bg);
+  border-radius: 28px;
+  padding: 32px;
+  box-shadow: 0 32px 60px -45px rgba(15, 23, 42, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(91, 110, 245, 0.12), transparent 55%);
+  pointer-events: none;
+}
+
+.brand {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--accent-muted);
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.brand p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.navButton {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 12px 16px;
+  border-radius: 14px;
+  transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.navButtonActive,
+.navButton:hover {
+  background: rgba(91, 110, 245, 0.08);
+  border-color: rgba(91, 110, 245, 0.15);
+  color: var(--accent);
+}
+
+.support {
+  background: rgba(91, 110, 245, 0.08);
+  border-radius: 18px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.support h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.support p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.langSwitch {
+  display: flex;
+  gap: 8px;
+}
+
+.langButton {
+  flex: 1;
+  border-radius: 12px;
+  border: 1px solid rgba(91, 110, 245, 0.2);
+  background: transparent;
+  padding: 10px 0;
+  color: var(--text-secondary);
+  transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.langButtonActive {
+  background: var(--accent);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 14px 28px -18px rgba(91, 110, 245, 0.75);
+}
+
+.content {
+  background: var(--card-bg);
+  border-radius: 36px;
+  padding: 40px;
+  box-shadow: 0 45px 85px -50px rgba(15, 23, 42, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 960px) {
+  .content {
+    padding: 32px 24px 40px;
+  }
+}
+
+.content::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at bottom right, rgba(91, 110, 245, 0.1), transparent 60%);
+  pointer-events: none;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.toolbar h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.datasetTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+}
+
+.searchCard {
+  background: rgba(248, 249, 255, 0.8);
+  border: 1px solid var(--stroke);
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.searchRow {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .searchRow {
+    flex-direction: column;
+  }
+}
+
+.input {
+  flex: 1;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  padding: 14px 16px;
+  font-size: 1rem;
+  background: white;
+}
+
+.ctaButton {
+  border-radius: 16px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  padding: 14px 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 18px 32px -24px rgba(91, 110, 245, 0.85);
+}
+
+.ctaButton span {
+  display: inline-block;
+}
+
+.helperText {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.resultCard {
+  background: white;
+  border-radius: 28px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.resultHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resultHeader h3 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.resultHeader small {
+  color: var(--text-secondary);
+}
+
+.pickupGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.pickupCard {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(91, 110, 245, 0.06);
+  border: 1px solid rgba(91, 110, 245, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pickupDay {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.pickupType {
+  align-self: start;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid rgba(91, 110, 245, 0.2);
+  color: var(--accent);
+}
+
+.bulkyTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: rgba(248, 248, 255, 0.9);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.bulkyTable th,
+.bulkyTable td {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.bulkyTable tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(91, 110, 245, 0.12);
+  color: var(--accent);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  z-index: 1;
+}
+
+.mascot {
+  position: absolute;
+  width: 180px;
+  bottom: 16px;
+  right: 16px;
+  opacity: 0.9;
+  pointer-events: none;
+  transform: rotate(2deg);
+}
+
+@media (max-width: 600px) {
+  .mascot {
+    width: 120px;
+    bottom: 12px;
+    right: 12px;
+    opacity: 0.8;
+  }
+}
+
+.emptyState {
+  background: rgba(91, 110, 245, 0.08);
+  border-radius: 20px;
+  padding: 20px;
+  color: var(--text-secondary);
+}
+
+.loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+.loading::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(91, 110, 245, 0.3);
+  border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
