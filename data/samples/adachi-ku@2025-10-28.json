@@ -1,0 +1,38 @@
+{
+  "ward": "Adachi-ku",
+  "version": "2025-10-28",
+  "pickups": [
+    {
+      "day": "Mon",
+      "type": "burnable"
+    },
+    {
+      "day": "Tue",
+      "type": "plastic"
+    },
+    {
+      "day": "Wed",
+      "type": "paper"
+    },
+    {
+      "day": "Thu",
+      "type": "cans"
+    },
+    {
+      "day": "Fri",
+      "type": "bottles"
+    }
+  ],
+  "bulkyFees": [
+    {
+      "item": "Small chair",
+      "feeYen": 400
+    },
+    {
+      "item": "Bicycle",
+      "feeYen": 2000,
+      "notes": "without battery"
+    }
+  ],
+  "source": "official ward PDF"
+}

@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GomiHelperSchedule",
+  "type": "object",
+  "required": [
+    "ward",
+    "version",
+    "pickups"
+  ],
+  "properties": {
+    "ward": {
+      "type": "string"
+    },
+    "station": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "description": "ISO date"
+    },
+    "pickups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "day",
+          "type"
+        ],
+        "properties": {
+          "day": {
+            "type": "string",
+            "enum": [
+              "Mon",
+              "Tue",
+              "Wed",
+              "Thu",
+              "Fri",
+              "Sat",
+              "Sun"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "burnable",
+              "plastic",
+              "cans",
+              "bottles",
+              "paper",
+              "bulk"
+            ]
+          }
+        }
+      }
+    },
+    "bulkyFees": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "item",
+          "feeYen"
+        ],
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "feeYen": {
+            "type": "number"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "string",
+      "description": "reference URL or manual"
+    }
+  }
+}

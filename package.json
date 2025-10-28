@@ -1,0 +1,22 @@
+{
+  "name": "gomihelper",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "export": "next export",
+    "start": "npx serve out",
+    "update:data": "ts-node scripts/update-data.ts"
+  },
+  "dependencies": {
+    "next": "^16.0.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.2.66",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}
