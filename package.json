@@ -4,9 +4,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "export": "next export",
+    "export": "next export -o out",
     "start": "npx serve out",
-    "update:data": "ts-node scripts/update-data.ts"
+    "update:data": "ts-node scripts/update-data.ts",
+    "postinstall": "node scripts/setup-next-export.js"
   },
   "dependencies": {
     "next": "^16.0.0",

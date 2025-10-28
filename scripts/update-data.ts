@@ -1,4 +1,4 @@
-import { writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 
 async function main() {
   const stamp = new Date().toISOString().slice(0,10);
@@ -18,7 +18,9 @@ async function main() {
     ],
     source: "manual/stub"
   };
-  writeFileSync(`data/samples/adachi-ku@${stamp}.json`, JSON.stringify(data, null, 2));
+  const dir = 'public/data/samples';
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(`${dir}/adachi-ku@${stamp}.json`, JSON.stringify(data, null, 2));
   console.log("Updated dataset", stamp);
 }
 

@@ -78,9 +78,10 @@ export default function Home() {
   const search = async () => {
     setLoading(true);
     try {
-      const mod = await import('../data/samples/adachi-ku@2025-10-28.json'); // note: one ".."
-      const sample = (mod as any).default ?? mod;
-      setData(sample as Schedule);
+      const res = await fetch('/data/samples/adachi-ku@2025-10-28.json');
+      if (!res.ok) throw new Error(`Failed to load data: ${res.status}`);
+      const sample = (await res.json()) as Schedule;
+      setData(sample);
     } finally {
       setLoading(false);
     }
