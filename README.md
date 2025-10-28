@@ -17,11 +17,12 @@ npm run export
 ```
 
 ## Deploy to GitHub Pages
-This repo includes a manual workflow:
-- Enable **Settings → Pages → Source: GitHub Actions**
-- Run the workflow **“Deploy to GitHub Pages (manual)”**
+The site deploys automatically from the `main` branch via `.github/workflows/pages.yml`.
 
-To auto-deploy on push to main, uncomment the `push:` trigger in `.github/workflows/deploy.yml`.
+1. In GitHub, open **Settings → Pages** and set **Source** to **GitHub Actions**.
+2. Add your custom domain, save, and tick **Enforce HTTPS** once the certificate is issued.
+3. After each push to `main`, verify the latest deployment under **Settings → Pages** → **Latest deployments**.
+4. Configure the required DNS records at your registrar following the [GitHub Pages custom domain guide](https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site).
 
 ## Weekly data updates
 A disabled workflow is included at `.github/workflows/weekly-data.yml`.  
@@ -29,7 +30,7 @@ A disabled workflow is included at `.github/workflows/weekly-data.yml`.
 - Update script: `scripts/update-data.ts` (stub).
 
 ## Data model
-- See `data/schema.json`. Samples under `data/samples/`.
+- See `public/data/schema.json`. Samples under `public/data/samples/`.
 - Code license: MIT (`LICENSE`)
 - Data license: CC BY 4.0 (`DATA-LICENSE`) — please attribute “GomiHelper (gomihelper.com)”.
 
