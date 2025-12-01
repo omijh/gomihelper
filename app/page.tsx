@@ -25,7 +25,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     bulkyFees: 'Bulky-item fees (¥)',
     feedback: 'Feedback',
     code: 'Code: MIT · Data: CC BY 4.0',
-    hint: 'Try a ward name (e.g., Adachi, Meguro, Fukuoka Chūō)…',
+    hint: 'Try a ward name (e.g., Minato, Meguro, Fukuoka Chūō)…',
     navOverview: 'Overview',
     navSchedule: 'Pickup schedule',
     navPricing: 'Bulky-item pricing',
@@ -52,7 +52,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     bulkyFees: '粗大ごみ料金 (¥)',
     feedback: 'ご意見',
     code: 'コード: MIT · データ: CC BY 4.0',
-    hint: '区名または駅名を入力してください（例：足立区、目黒区、福岡・中央）',
+    hint: '区名または駅名を入力してください（例：港区、目黒区、福岡・中央）',
     navOverview: 'ダッシュボード',
     navSchedule: '収集スケジュール',
     navPricing: '粗大ごみ料金',
@@ -92,7 +92,7 @@ const TYPE_LABELS: Record<Lang, Record<PickupType, string>> = {
 
 export default function Home() {
   const [lang, setLang] = useState<Lang>('en');
-  const [query, setQuery] = useState('Adachi');
+  const [query, setQuery] = useState('Minato-ku');
   const [data, setData] = useState<Schedule | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -113,7 +113,7 @@ export default function Home() {
   const search = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/data/samples/adachi-ku@2025-10-28.json');
+      const res = await fetch('/data/samples/minato-ku@2025-10-28.json');
       if (!res.ok) throw new Error(`Failed to load data: ${res.status}`);
       const sample = (await res.json()) as Schedule;
       setData(sample);

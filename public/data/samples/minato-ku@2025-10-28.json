@@ -1,5 +1,5 @@
 {
-  "ward": "Adachi-ku",
+  "ward": "Minato-ku",
   "version": "2025-10-28",
   "pickups": [
     {
@@ -12,7 +12,7 @@
     },
     {
       "day": "Wed",
-      "type": "paper"
+      "type": "burnable"
     },
     {
       "day": "Thu",
@@ -20,13 +20,17 @@
     },
     {
       "day": "Fri",
-      "type": "bottles"
+      "type": "paper"
     }
   ],
   "bulkyFees": [
     {
-      "item": "Small chair",
-      "feeYen": 400
+      "item": "Small table",
+      "feeYen": 800
+    },
+    {
+      "item": "Office chair",
+      "feeYen": 1200
     },
     {
       "item": "Bicycle",
