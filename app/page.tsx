@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styles from './page.module.css';
 
 type Lang = 'en' | 'ja';
@@ -10,7 +10,7 @@ type Schedule = {
   ward: string;
   station?: string;
   version: string; // ISO date
-  pickups: { day: string; type: PickupType }[];
+  pickups: { day: string; type: PickupType; notes?: string }[];
   bulkyFees?: { item: string; feeYen: number; notes?: string }[];
 };
 
@@ -92,8 +92,9 @@ const TYPE_LABELS: Record<Lang, Record<PickupType, string>> = {
 
 export default function Home() {
   const [lang, setLang] = useState<Lang>('en');
-  const [query, setQuery] = useState('Minato-ku');
+  const [query, setQuery] = useState('文京区');
   const [data, setData] = useState<Schedule | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -110,21 +111,29 @@ export default function Home() {
 
   const t = (key: string) => STRINGS[lang][key] || key;
 
-  const search = async () => {
+  const search = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch('/data/samples/minato-ku@2025-10-28.json');
-      if (!res.ok) throw new Error(`Failed to load data: ${res.status}`);
-      const sample = (await res.json()) as Schedule;
-      setData(sample);
+      const res = await fetch(`/api/schedule?q=${encodeURIComponent(query)}`, {
+        cache: 'no-store',
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Failed to load dataset');
+      setData(json.schedule as Schedule);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
+      setData(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [query]);
 
   useEffect(() => {
     search();
-  }, []);
+  }, [search]);
 
   return (
     <main className={styles.page}>
@@ -227,6 +236,12 @@ export default function Home() {
             <div className={styles.loading}>{t('loading')}</div>
           )}
 
+          {error && !loading && (
+            <div className={styles.emptyState} role="alert">
+              {error}
+            </div>
+          )}
+
           {!loading && !data && <div className={styles.emptyState}>{t('emptyState')}</div>}
 
           {data && !loading && (
@@ -248,6 +263,9 @@ export default function Home() {
                     <div key={`${pickup.day}-${index}`} className={styles.pickupCard}>
                       <span className={styles.pickupDay}>{pickup.day}</span>
                       <span className={styles.pickupType}>{TYPE_LABELS[lang][pickup.type]}</span>
+                      {pickup.notes ? (
+                        <small className={styles.helperText}>{pickup.notes}</small>
+                      ) : null}
                     </div>
                   ))}
                 </div>
