@@ -268,6 +268,33 @@
   font-size: 1rem;
 }
 
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.filterBtn {
+  border-radius: 8px;
+  border: 1px solid var(--stroke);
+  background: transparent;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.filterBtn:hover {
+  background: var(--accent-muted);
+}
+
+.filterBtnActive {
+  background: var(--accent);
+  color: white;
+  border-color: transparent;
+}
+
 .calendarGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);

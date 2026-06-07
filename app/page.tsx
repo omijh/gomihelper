@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './page.module.css';
 
 type Lang = 'en' | 'ja';
@@ -19,6 +19,11 @@ type AreaEntry = {
   aliases: string[];
   file: string;
 };
+
+type IndexData = { version: string; areas: AreaEntry[] };
+
+const INDEX_CACHE_KEY = 'gh_index';
+const ALL_TYPES: PickupType[] = ['burnable', 'plastic', 'cans', 'bottles', 'paper', 'bulk'];
 
 const STRINGS: Record<Lang, Record<string, string>> = {
   en: {
@@ -145,8 +150,28 @@ export default function Home() {
   const [geoError, setGeoError] = useState('');
   const [notFound, setNotFound] = useState(false);
   const [suggestions, setSuggestions] = useState<AreaEntry[]>([]);
+  const [filterType, setFilterType] = useState<PickupType | null>(null);
   const indexRef = useRef<AreaEntry[] | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const loadFromHash = useCallback((areas: AreaEntry[]) => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const decoded = decodeURIComponent(hash);
+    setQuery(decoded);
+    const norm = decoded.toLowerCase().replace(/[ー−]/g, '');
+    const match = areas.find((a) =>
+      a.aliases.some((alias) => alias.toLowerCase().replace(/[ー−]/g, '') === norm),
+    );
+    if (match) {
+      setLoading(true);
+      fetch(`/data/${match.file}`)
+        .then((r) => r.json())
+        .then((d: Schedule) => { setData(d); setQuery(d.ward); })
+        .catch(() => setNotFound(true))
+        .finally(() => setLoading(false));
+    }
+  }, []);
 
   useEffect(() => {
     const saved =
@@ -154,29 +179,29 @@ export default function Home() {
         ? (window.localStorage.getItem('gh_lang') as Lang | null)
         : null;
     if (saved === 'en' || saved === 'ja') setLang(saved);
+    const cached = localStorage.getItem(INDEX_CACHE_KEY);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached) as IndexData;
+        indexRef.current = parsed.areas;
+        loadFromHash(parsed.areas);
+        return;
+      } catch { /* fall through to fetch */ }
+    }
     fetch('/data/index.json')
       .then((r) => r.json())
-      .then((idx: { areas: AreaEntry[] }) => {
+      .then((idx: IndexData) => {
         indexRef.current = idx.areas;
-        const hash = window.location.hash.slice(1);
-        if (hash) {
-          const decoded = decodeURIComponent(hash);
-          setQuery(decoded);
-          const norm = decoded.toLowerCase().replace(/[ー−]/g, '');
-          const match = idx.areas.find((a) =>
-            a.aliases.some((alias) => alias.toLowerCase().replace(/[ー−]/g, '') === norm),
-          );
-          if (match) {
-            setLoading(true);
-            fetch(`/data/${match.file}`)
-              .then((r) => r.json())
-              .then((d: Schedule) => { setData(d); setQuery(d.ward); })
-              .catch(() => setNotFound(true))
-              .finally(() => setLoading(false));
-          }
-        }
+        localStorage.setItem(INDEX_CACHE_KEY, JSON.stringify(idx));
+        loadFromHash(idx.areas);
       })
       .catch(() => {});
+  }, [loadFromHash]);
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
   }, []);
 
   useEffect(() => {
@@ -213,6 +238,7 @@ export default function Home() {
       if (!res.ok) throw new Error(`Failed to load data: ${res.status}`);
       const d = (await res.json()) as Schedule;
       setData(d);
+      setFilterType(null);
       setQuery(d.ward);
     } catch {
       setNotFound(true);
@@ -414,10 +440,31 @@ export default function Home() {
 
             <div>
               <h3 className={styles.sectionTitle}>{t('weeklyPickups')}</h3>
+              <div className={styles.filterRow}>
+                <button
+                  className={`${styles.filterBtn} ${filterType === null ? styles.filterBtnActive : ''}`}
+                  onClick={() => setFilterType(null)}
+                  type="button"
+                >
+                  {lang === 'ja' ? 'すべて' : 'All'}
+                </button>
+                {ALL_TYPES.map((t) => (
+                  <button
+                    key={t}
+                    className={`${styles.filterBtn} ${filterType === t ? styles.filterBtnActive : ''}`}
+                    onClick={() => setFilterType(t)}
+                    title={TYPE_DESCRIPTIONS[lang][t]}
+                    type="button"
+                  >
+                    {TYPE_LABELS[lang][t]}
+                  </button>
+                ))}
+              </div>
               <div className={styles.calendarGrid}>
                 {(() => {
                   const byDay: Record<string, Pickup[]> = {};
                   for (const p of data.pickups) {
+                    if (filterType && p.type !== filterType) continue;
                     (byDay[p.day] ??= []).push(p);
                   }
                   const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
