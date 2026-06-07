@@ -8,7 +8,7 @@
     "export": "next export -o out",
     "start": "npx serve out",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
-    "update:data": "ts-node scripts/update-data.ts",
+    "update:data": "tsx scripts/update-data.ts",
     "postinstall": "node scripts/setup-next-export.js"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
     "typescript": "^5.6.3"
   }
 }
