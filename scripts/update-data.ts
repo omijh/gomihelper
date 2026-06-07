@@ -8,7 +8,7 @@ const API_BASE = 'https://service.api.metro.tokyo.lg.jp/api';
 type PickupType = 'burnable' | 'plastic' | 'cans' | 'bottles' | 'paper' | 'bulk';
 type Pickup = { day: string; type: PickupType; pattern?: string };
 type BulkyFee = { item: string; feeYen: number; notes?: string };
-type Schedule = { ward: string; version: string; pickups: Pickup[]; bulkyFees?: BulkyFee[]; source: string };
+type Schedule = { ward: string; station?: string; version: string; pickups: Pickup[]; bulkyFees?: BulkyFee[]; source: string };
 type ColumnMapping = Record<string, string | string[]>;
 
 type Source =
@@ -90,7 +90,7 @@ const WARDS: WardConfig[] = [
   },
   {
     ward: 'Adachi-ku',
-    aliases: ['adachi', '足立区', '足立', 'kitasenju', '北千住', 'ayase', '綾瀬', 'takenotsuka', '竹の塚'],
+    aliases: ['adachi', '足立区', '足立', 'kitasenju', '北千住', 'ayase', '綾瀬', 'takenotsuka', '竹の塚', 'toneri', '舎人'],
     source: { type: 'html-table', url: 'https://www.city.adachi.tokyo.jp/seso/kurashi/sche.html' },
     mapping: { burnable: '燃やすごみ', plastic: 'プラスチック', bulk: '不燃ごみ', paper: '資源' },
     bulkyFees: [{ item: 'Sofa', feeYen: 800 }, { item: 'Bicycle', feeYen: 600 }, { item: 'Futon set', feeYen: 400 }],
@@ -568,6 +568,29 @@ async function fetchHigashikurumeSchedule(): Promise<Schedule> {
   };
 }
 
+function fetchAdachiSchedule(): Schedule {
+  return {
+    ward: 'Adachi-ku',
+    station: '舎人 (Toneri)',
+    version: new Date().toISOString().slice(0, 10),
+    pickups: [
+      { day: 'Wed', type: 'burnable' as PickupType },
+      { day: 'Sat', type: 'burnable' as PickupType },
+      { day: 'Mon', type: 'bulk' as PickupType, pattern: '第1・3' },
+      { day: 'Thu', type: 'paper' as PickupType },
+      { day: 'Thu', type: 'cans' as PickupType },
+      { day: 'Thu', type: 'bottles' as PickupType },
+      { day: 'Tue', type: 'plastic' as PickupType },
+    ].sort((a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day)),
+    bulkyFees: [
+      { item: 'Sofa', feeYen: 800 },
+      { item: 'Bicycle', feeYen: 600 },
+      { item: 'Futon set', feeYen: 400 },
+    ],
+    source: 'Manual (Toneri)',
+  };
+}
+
 async function fetchOtaXLSX(): Promise<Record<string, string>[]> {
   const res = await fetch('https://www.opendata.metro.tokyo.lg.jp/ootaku/131113_shigengomiyoubi.xlsx');
   const buf = await res.arrayBuffer();
@@ -622,6 +645,8 @@ async function fetchWardSchedule(config: WardConfig): Promise<Schedule | null> {
         return await fetchTachikawaSchedule();
       case 'Higashikurume':
         return await fetchHigashikurumeSchedule();
+      case 'Adachi-ku':
+        return fetchAdachiSchedule();
       default:
         switch (config.source.type) {
           case 'api':

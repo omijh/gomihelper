@@ -525,7 +525,7 @@ export default function Home() {
         )}
 
         <footer className={styles.footer}>
-          <span>{t('feedback')}: <a href="mailto:gomihelper@gmail.com">gomihelper@gmail.com</a></span>
+          <span><a href="/submit">{lang === 'ja' ? 'データを提供' : 'Submit data'}</a> &middot; {t('feedback')}: <a href="mailto:gomihelper@gmail.com">gomihelper@gmail.com</a></span>
           <span>{t('code')}</span>
         </footer>
       </div>
