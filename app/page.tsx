@@ -1,91 +1,64 @@
 'use client';
-import Image from 'next/image';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './page.module.css';
 
 type Lang = 'en' | 'ja';
 type PickupType = 'burnable' | 'plastic' | 'cans' | 'bottles' | 'paper' | 'bulk';
+type Pickup = { day: string; type: PickupType; pattern?: string };
 
 type Schedule = {
   ward: string;
   station?: string;
-  version: string; // ISO date
-  pickups: { day: string; type: PickupType; notes?: string }[];
+  version: string;
+  pickups: Pickup[];
   bulkyFees?: { item: string; feeYen: number; notes?: string }[];
 };
 
-const decodeResponse = async (response: Response) => {
-  const buffer = await response.arrayBuffer();
-  try {
-    return new TextDecoder('shift_jis').decode(buffer);
-  } catch {
-    return new TextDecoder('utf-8').decode(buffer);
-  }
+type AreaEntry = {
+  ward: string;
+  aliases: string[];
+  file: string;
 };
-
-const parseCsv = (csv: string) =>
-  csv
-    .trim()
-    .split(/\r?\n/)
-    .map((line) =>
-      line
-        .split(',')
-        .map((cell) => cell.trim())
-        .filter((cell) => cell.length > 0),
-    )
-    .filter((row) => row.length > 0);
 
 const STRINGS: Record<Lang, Record<string, string>> = {
   en: {
-    title: 'GomiHelper',
-    tagline: 'Concise recycling guidance for every Japanese ward.',
-    placeholder: 'Ward / station',
-    search: 'Search schedule',
+    placeholder: 'Search ward...',
+    search: 'Search',
     datasetVersion: 'Dataset version',
     weeklyPickups: 'Weekly pickups',
-    bulkyFees: 'Bulky-item fees (¥)',
+    bulkyFees: 'Bulky-item fees',
     feedback: 'Feedback',
     code: 'Code: MIT · Data: CC BY 4.0',
-    hint: 'Try a ward name (e.g., Minato, Meguro, Fukuoka Chūō)…',
-    navOverview: 'Overview',
-    navSchedule: 'Pickup schedule',
-    navPricing: 'Bulky-item pricing',
-    navDatasets: 'Dataset guide',
-    supportTitle: 'Need a new area?',
-    supportText: 'Send us your ward or station—we are expanding coverage weekly.',
-    quickStart: 'Quick start',
-    quickStartHint: 'Search for any Tokyo ward to preview an example dataset.',
-    languageLabel: 'Language',
-    loading: 'Loading…',
+    hint: 'Try Chuo, Bunkyo, Taito, Nakano\u2026',
+    loading: 'Loading\u2026',
     lastUpdated: 'Last updated',
-    emptyState: 'Start by searching for your area to unlock the latest pickup calendar.',
+    emptyState: 'Start by searching for your area.',
+    detectLocation: 'Detect my location',
+    detecting: 'Detecting\u2026',
+    geoNotFound: 'Could not determine your ward. Try typing it manually.',
+    geoDenied: 'Location access denied. Please type your ward manually.',
+    geoUnavailable: 'Location unavailable on this device.',
     feesHeaderItem: 'Item',
     feesHeaderFee: 'Fee',
     feesHeaderNotes: 'Notes',
   },
   ja: {
-    title: 'GomiHelper',
-    tagline: '全国の自治体向けに、ごみ分別と収集日をすっきり表示。',
-    placeholder: '区・駅名',
-    search: '収集日を検索',
+    placeholder: '区名を検索...',
+    search: '検索',
     datasetVersion: 'データ版',
     weeklyPickups: '週間の収集',
-    bulkyFees: '粗大ごみ料金 (¥)',
+    bulkyFees: '粗大ごみ料金',
     feedback: 'ご意見',
     code: 'コード: MIT · データ: CC BY 4.0',
-    hint: '区名または駅名を入力してください（例：港区、目黒区、福岡・中央）',
-    navOverview: 'ダッシュボード',
-    navSchedule: '収集スケジュール',
-    navPricing: '粗大ごみ料金',
-    navDatasets: 'データセット案内',
-    supportTitle: '新しい地域が必要ですか？',
-    supportText: '区や駅を教えてください。毎週エリアを追加しています。',
-    quickStart: 'クイックスタート',
-    quickStartHint: 'まずは東京都内の区名でサンプルデータを確認できます。',
-    languageLabel: '言語',
+    hint: '例：中央区、文京区、台東区、中野区',
     loading: '読み込み中…',
     lastUpdated: '最終更新日',
-    emptyState: 'お住まいの地域を検索して、最新の収集カレンダーを確認しましょう。',
+    emptyState: 'お住まいの地域を検索してください。',
+    detectLocation: '現在地を検出',
+    detecting: '検出中…',
+    geoNotFound: '区を特定できませんでした。手動で入力してください。',
+    geoDenied: '位置情報が拒否されました。手動で入力してください。',
+    geoUnavailable: 'お使いの端末では位置情報が利用できません。',
     feesHeaderItem: '品目',
     feesHeaderFee: '料金',
     feesHeaderNotes: '備考',
@@ -111,12 +84,69 @@ const TYPE_LABELS: Record<Lang, Record<PickupType, string>> = {
   },
 };
 
+const TYPE_DESCRIPTIONS: Record<Lang, Record<PickupType, string>> = {
+  en: {
+    burnable: 'Kitchen waste, paper, diapers, etc.',
+    plastic: 'Plastic containers & packaging',
+    cans: 'Aluminum & steel cans',
+    bottles: 'Glass bottles & PET bottles',
+    paper: 'Newspapers, magazines, cardboard',
+    bulk: 'Large garbage (fees apply)',
+  },
+  ja: {
+    burnable: '生ごみ、紙類、紙おむつなど',
+    plastic: '容器包装プラスチック',
+    cans: 'アルミ缶・スチール缶',
+    bottles: 'びん・ペットボトル',
+    paper: '新聞・雑誌・段ボール',
+    bulk: '粗大ごみ（有料）',
+  },
+};
+
+const DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+const TYPE_TO_STYLE: Record<PickupType, string> = {
+  burnable: styles.typeBadgeBurnable,
+  plastic: styles.typeBadgePlastic,
+  cans: styles.typeBadgeCans,
+  bottles: styles.typeBadgeBottles,
+  paper: styles.typeBadgePaper,
+  bulk: styles.typeBadgeBulk,
+};
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const d: number[][] = [];
+  for (let i = 0; i <= m; i++) { d[i] = [i]; }
+  for (let j = 0; j <= n; j++) { d[0][j] = j; }
+  for (let j = 1; j <= n; j++) {
+    for (let i = 1; i <= m; i++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+    }
+  }
+  return d[m][n];
+}
+
+function fuzzyMatch(query: string, target: string): boolean {
+  const q = query.toLowerCase().replace(/[ー−]/g, '');
+  const t = target.toLowerCase().replace(/[ー−]/g, '');
+  if (t.includes(q) || q.includes(t)) return true;
+  if (q.length < 2) return false;
+  return levenshtein(q, t) <= Math.max(1, Math.floor(q.length / 3));
+}
+
 export default function Home() {
   const [lang, setLang] = useState<Lang>('en');
-  const [query, setQuery] = useState('文京区');
+  const [query, setQuery] = useState('');
   const [data, setData] = useState<Schedule | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [detecting, setDetecting] = useState(false);
+  const [geoError, setGeoError] = useState('');
+  const [notFound, setNotFound] = useState(false);
+  const [suggestions, setSuggestions] = useState<AreaEntry[]>([]);
+  const indexRef = useRef<AreaEntry[] | null>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const saved =
@@ -124,256 +154,333 @@ export default function Home() {
         ? (window.localStorage.getItem('gh_lang') as Lang | null)
         : null;
     if (saved === 'en' || saved === 'ja') setLang(saved);
+    fetch('/data/index.json')
+      .then((r) => r.json())
+      .then((idx: { areas: AreaEntry[] }) => {
+        indexRef.current = idx.areas;
+        const hash = window.location.hash.slice(1);
+        if (hash) {
+          const decoded = decodeURIComponent(hash);
+          setQuery(decoded);
+          const norm = decoded.toLowerCase().replace(/[ー−]/g, '');
+          const match = idx.areas.find((a) =>
+            a.aliases.some((alias) => alias.toLowerCase().replace(/[ー−]/g, '') === norm),
+          );
+          if (match) {
+            setLoading(true);
+            fetch(`/data/${match.file}`)
+              .then((r) => r.json())
+              .then((d: Schedule) => { setData(d); setQuery(d.ward); })
+              .catch(() => setNotFound(true))
+              .finally(() => setLoading(false));
+          }
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') window.localStorage.setItem('gh_lang', lang);
   }, [lang]);
 
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSuggestions([]);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  useEffect(() => {
+    if (data && typeof window !== 'undefined') {
+      history.replaceState(null, '', `#${encodeURIComponent(data.ward)}`);
+    }
+  }, [data]);
+
   const t = (key: string) => STRINGS[lang][key] || key;
 
-  const search = useCallback(async () => {
+  const normalize = (s: string) => s.toLowerCase().replace(/[ー−]/g, '').trim();
+
+  const searchByMatch = async (match: AreaEntry) => {
     setLoading(true);
-    setError(null);
+    setNotFound(false);
+    setGeoError('');
+    setSuggestions([]);
     try {
-      const searchUrl =
-        'https://catalog.data.metro.tokyo.lg.jp/api/3/action/package_search';
-      const searchRes = await fetch(
-        `${searchUrl}?q=${encodeURIComponent(query)}+収集日&rows=1`,
-        { cache: 'no-store' },
-      );
-
-      if (!searchRes.ok) throw new Error(`Search failed: ${searchRes.status}`);
-      const searchJson = await searchRes.json();
-      const pkg = searchJson?.result?.results?.[0];
-
-      if (!pkg) throw new Error('No matching dataset found');
-
-      const csvResource = pkg.resources?.find(
-        (r: { format?: string; url?: string }) =>
-          r.format?.toLowerCase() === 'csv' && typeof r.url === 'string',
-      );
-
-      if (!csvResource) throw new Error('Dataset does not provide CSV data');
-
-      const csvRes = await fetch(csvResource.url, { cache: 'no-store' });
-      if (!csvRes.ok) throw new Error(`Download failed: ${csvRes.status}`);
-
-      const csvText = await decodeResponse(csvRes);
-      const rows = parseCsv(csvText);
-
-      const pickups = rows.slice(1, 8).map((row, index) => ({
-        day: row[0] || `Row ${index + 1}`,
-        type: 'burnable' as PickupType,
-        notes: row.slice(1).join(' ・ '),
-      }));
-
-      const schedule: Schedule = {
-        ward: pkg.title || query,
-        version: pkg.metadata_modified || pkg.metadata_created || 'unknown',
-        pickups: pickups.length
-          ? pickups
-          : [
-              {
-                day: '—',
-                type: 'bulk',
-                notes: 'No pickup rows found in dataset.',
-              },
-            ],
-      };
-
-      setData(schedule);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setError(message);
-      setData(null);
+      const res = await fetch(`/data/${match.file}`);
+      if (!res.ok) throw new Error(`Failed to load data: ${res.status}`);
+      const d = (await res.json()) as Schedule;
+      setData(d);
+      setQuery(d.ward);
+    } catch {
+      setNotFound(true);
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  };
 
-  useEffect(() => {
-    search();
-  }, [search]);
+  const selectSuggestion = (area: AreaEntry) => {
+    setQuery(area.ward);
+    setSuggestions([]);
+    searchByMatch(area);
+  };
+
+  const searchByWardName = (wardName: string): boolean => {
+    if (!indexRef.current) return false;
+    const norm = normalize(wardName);
+    const match = indexRef.current.find((a) =>
+      a.aliases.some((alias) => normalize(alias) === norm),
+    );
+    if (!match) return false;
+    searchByMatch(match);
+    return true;
+  };
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      setGeoError(t('geoUnavailable'));
+      return;
+    }
+    setDetecting(true);
+    setGeoError('');
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=ja`,
+            { headers: { 'User-Agent': 'GomiHelper/1.0' } },
+          );
+          const geo = await res.json();
+          const addr = geo.address || {};
+          const wardName = addr.city || addr.town || addr.suburb || addr.neighbourhood || '';
+          if (!searchByWardName(wardName)) {
+            setGeoError(t('geoNotFound'));
+          }
+        } catch {
+          setGeoError(t('geoNotFound'));
+        } finally {
+          setDetecting(false);
+        }
+      },
+      (err) => {
+        setDetecting(false);
+        if (err.code === err.PERMISSION_DENIED) setGeoError(t('geoDenied'));
+        else setGeoError(t('geoNotFound'));
+      },
+      { timeout: 10000 },
+    );
+  };
+
+  const search = async () => {
+    const q = query.trim();
+    if (!q || !indexRef.current) return;
+    setGeoError('');
+    setSuggestions([]);
+    const norm = normalize(q);
+    const match = indexRef.current.find((a) =>
+      a.aliases.some((alias) => fuzzyMatch(norm, alias)),
+    );
+    if (!match) {
+      setNotFound(true);
+      return;
+    }
+    await searchByMatch(match);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') search();
+  };
 
   return (
     <main className={styles.page}>
       <div className={styles.surface}>
-        <aside className={styles.sidebar}>
+        <header className={styles.header}>
           <div className={styles.brand}>
-            <div className={styles.logo}>🦝</div>
-            <div>
-              <h1>{t('title')}</h1>
-              <p>{t('tagline')}</p>
-            </div>
+            <span className={styles.logo}>{'\u{1F99D}'}</span>
+            <span className={styles.title}>GomiHelper</span>
           </div>
-
-          <nav className={styles.nav} aria-label="Primary">
-            <button className={`${styles.navButton} ${styles.navButtonActive}`} type="button">
-              {t('navOverview')}
+          <div className={styles.langSwitch} role="radiogroup" aria-label="Language">
+            <button
+              type="button"
+              className={`${styles.langButton} ${lang === 'en' ? styles.langButtonActive : ''}`}
+              onClick={() => setLang('en')}
+              aria-pressed={lang === 'en'}
+            >
+              EN
             </button>
-            <button className={styles.navButton} type="button">
-              {t('navSchedule')}
+            <button
+              type="button"
+              className={`${styles.langButton} ${lang === 'ja' ? styles.langButtonActive : ''}`}
+              onClick={() => setLang('ja')}
+              aria-pressed={lang === 'ja'}
+            >
+              {'\u65E5\u672C\u8A9E'}
             </button>
-            <button className={styles.navButton} type="button">
-              {t('navPricing')}
-            </button>
-            <button className={styles.navButton} type="button">
-              {t('navDatasets')}
-            </button>
-          </nav>
-
-          <div className={styles.support}>
-            <h3>{t('supportTitle')}</h3>
-            <p>{t('supportText')}</p>
-            <a className={styles.badge} href="mailto:gomihelper@gmail.com">
-              ✉️ gomihelper@gmail.com
-            </a>
           </div>
+        </header>
 
-          <div>
-            <p className={styles.helperText}>{t('quickStart')}</p>
-            <p className={styles.helperText}>{t('quickStartHint')}</p>
-          </div>
-
-          <div>
-            <p className={styles.helperText} style={{ marginBottom: 8 }}>
-              {t('languageLabel')}
-            </p>
-            <div className={styles.langSwitch} role="radiogroup" aria-label={t('languageLabel')}>
-              <button
-                type="button"
-                className={`${styles.langButton} ${lang === 'en' ? styles.langButtonActive : ''}`}
-                onClick={() => setLang('en')}
-                aria-pressed={lang === 'en'}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                className={`${styles.langButton} ${lang === 'ja' ? styles.langButtonActive : ''}`}
-                onClick={() => setLang('ja')}
-                aria-pressed={lang === 'ja'}
-              >
-                日本語
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        <section className={styles.content}>
-          <div className={styles.toolbar}>
-            <h2>{t('navSchedule')}</h2>
-            {data && (
-              <span className={styles.datasetTag}>
-                <span role="img" aria-hidden="true">
-                  📅
-                </span>
-                {t('lastUpdated')}: {data.version}
-              </span>
-            )}
-          </div>
-
-          <div className={styles.searchCard}>
-            <div>
-              <h3 style={{ margin: '0 0 4px' }}>{t('title')}</h3>
-              <p className={styles.helperText}>{t('hint')}</p>
-            </div>
+        <div className={styles.hero}>
+          <div className={styles.searchWrap} ref={searchRef}>
             <div className={styles.searchRow}>
               <input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setQuery(v);
+                  if (v.trim().length >= 1 && indexRef.current) {
+                    const normed = normalize(v);
+                    setSuggestions(
+                      indexRef.current.filter((a) =>
+                        a.aliases.some((alias) => fuzzyMatch(normed, alias)),
+                      ).slice(0, 6),
+                    );
+                  } else {
+                    setSuggestions([]);
+                  }
+                }}
+                onKeyDown={handleKeyDown}
                 placeholder={t('placeholder')}
                 className={styles.input}
                 aria-label={t('placeholder')}
               />
-              <button onClick={search} disabled={loading} className={styles.ctaButton}>
-                <span>{loading ? t('loading') : t('search')}</span>
+              <button onClick={search} disabled={loading || detecting} className={styles.ctaButton}>
+                {loading ? t('loading') : t('search')}
               </button>
             </div>
+            {suggestions.length > 0 && (
+              <div className={styles.suggestions}>
+                {suggestions.map((area) => (
+                  <button
+                    key={area.ward}
+                    className={styles.suggestionItem}
+                    onMouseDown={(e) => { e.preventDefault(); selectSuggestion(area); }}
+                  >
+                    <span className={styles.suggestionItemEm}>{area.ward}</span>
+                    <span className={styles.suggestionAliases}>
+                      {area.aliases.slice(1, 4).join(', ')}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+          <p className={styles.hint}>{t('hint')}</p>
+          <div className={styles.actions}>
+            <button
+              onClick={detectLocation}
+              disabled={loading || detecting}
+              className={styles.geoButton}
+              type="button"
+            >
+              {detecting ? t('detecting') : t('detectLocation')}
+            </button>
+            {geoError && <span className={styles.geoError}>{geoError}</span>}
+          </div>
+        </div>
 
-          {loading && (
-            <div className={styles.loading}>{t('loading')}</div>
-          )}
-
-          {error && !loading && (
-            <div className={styles.emptyState} role="alert">
-              {error}
+        {loading && (
+          <div className={styles.skeleton}>
+            <div className={styles.skelHeader}>
+              <div className={styles.skelLine} style={{ width: '40%' }} />
+              <div className={styles.skelLine} style={{ width: '25%' }} />
             </div>
-          )}
+            <div className={styles.skelGrid}>
+              {DAY_ORDER.map((d) => (
+                <div key={d} className={styles.skelDay}>
+                  <div className={styles.skelLine} style={{ width: '70%', height: 10, margin: '0 auto 8px' }} />
+                  <div className={styles.skelLine} style={{ width: '60%', height: 8, margin: '2px auto' }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-          {!loading && !data && <div className={styles.emptyState}>{t('emptyState')}</div>}
+        {!loading && notFound && <div className={styles.emptyState}>{t('hint')}</div>}
 
-          {data && !loading && (
-            <div className={styles.resultCard}>
-              <div className={styles.resultHeader}>
-                <h3>
-                  {data.ward}
-                  {data.station ? ` · ${data.station}` : ''}
-                </h3>
-                <small>
-                  {t('datasetVersion')}: {data.version}
-                </small>
+        {!loading && !data && !notFound && (
+          <div className={styles.emptyState}>{t('emptyState')}</div>
+        )}
+
+        {data && !loading && (
+          <div className={styles.result}>
+            <div className={styles.resultHeader}>
+              <h2>{data.ward}{data.station ? ` · ${data.station}` : ''}</h2>
+              <span className={styles.datasetTag}>
+                {t('lastUpdated')}: {data.version}
+              </span>
+            </div>
+
+            <div>
+              <h3 className={styles.sectionTitle}>{t('weeklyPickups')}</h3>
+              <div className={styles.calendarGrid}>
+                {(() => {
+                  const byDay: Record<string, Pickup[]> = {};
+                  for (const p of data.pickups) {
+                    (byDay[p.day] ??= []).push(p);
+                  }
+                  const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+                  return DAY_ORDER.map((day) => {
+                    const pickups = byDay[day] ?? [];
+                    const isToday = day === today;
+                    return (
+                      <div
+                        key={day}
+                        className={`${styles.calendarDay} ${isToday ? styles.calendarDayToday : ''}`}
+                      >
+                        <div className={styles.calendarDayName}>{day}</div>
+                        {pickups.length > 0 ? pickups.map((p) => (
+                          <span
+                            key={p.type}
+                            className={`${styles.typeBadge} ${TYPE_TO_STYLE[p.type]}`}
+                            title={TYPE_DESCRIPTIONS[lang][p.type]}
+                          >
+                            {TYPE_LABELS[lang][p.type]}
+                          </span>
+                        )) : <div className={styles.calendarDayEmpty} />}
+                        {pickups.some((p) => p.pattern) && (
+                          <div className={styles.patternLine}>
+                            {pickups.filter((p) => p.pattern).map((p) => p.pattern).join(' ')}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
+            </div>
 
+            {data.bulkyFees?.length ? (
               <div>
-                <h4 style={{ margin: '0 0 12px' }}>{t('weeklyPickups')}</h4>
-                <div className={styles.pickupGrid}>
-                  {data.pickups.map((pickup, index) => (
-                    <div key={`${pickup.day}-${index}`} className={styles.pickupCard}>
-                      <span className={styles.pickupDay}>{pickup.day}</span>
-                      <span className={styles.pickupType}>{TYPE_LABELS[lang][pickup.type]}</span>
-                      {pickup.notes ? (
-                        <small className={styles.helperText}>{pickup.notes}</small>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {data.bulkyFees?.length ? (
-                <div>
-                  <h4 style={{ margin: '0 0 12px' }}>{t('bulkyFees')}</h4>
-                  <table className={styles.bulkyTable}>
-                    <thead>
-                      <tr>
-                        <th>{t('feesHeaderItem')}</th>
-                        <th>{t('feesHeaderFee')}</th>
-                        <th>{t('feesHeaderNotes')}</th>
+                <h3 className={styles.sectionTitle}>{t('bulkyFees')}</h3>
+                <table className={styles.bulkyTable}>
+                  <thead>
+                    <tr>
+                      <th>{t('feesHeaderItem')}</th>
+                      <th>{t('feesHeaderFee')}</th>
+                      <th>{t('feesHeaderNotes')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.bulkyFees.map((fee, index) => (
+                      <tr key={`${fee.item}-${index}`}>
+                        <td>{fee.item}</td>
+                        <td>{'\u00A5'}{fee.feeYen.toLocaleString(lang === 'ja' ? 'ja-JP' : 'en-US')}</td>
+                        <td>{fee.notes ?? '\u2014'}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {data.bulkyFees.map((fee, index) => (
-                        <tr key={`${fee.item}-${index}`}>
-                          <td>{fee.item}</td>
-                          <td>¥{fee.feeYen.toLocaleString(lang === 'ja' ? 'ja-JP' : 'en-US')}</td>
-                          <td>{fee.notes ?? '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : null}
-            </div>
-          )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </div>
+        )}
 
-          <footer className={styles.footer}>
-            <span>
-              {t('feedback')}: <a href="mailto:gomihelper@gmail.com">gomihelper@gmail.com</a>
-            </span>
-            <span>{t('code')}</span>
-          </footer>
-
-          <Image
-            src="/mascot.svg"
-            alt="Helpful raccoon mascot pointing to recycling bins"
-            width={360}
-            height={360}
-            className={styles.mascot}
-            priority
-          />
-        </section>
+        <footer className={styles.footer}>
+          <span>{t('feedback')}: <a href="mailto:gomihelper@gmail.com">gomihelper@gmail.com</a></span>
+          <span>{t('code')}</span>
+        </footer>
       </div>
     </main>
   );

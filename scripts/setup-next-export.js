@@ -1,6 +1,8 @@
-const { chmodSync, existsSync, mkdirSync, writeFileSync, unlinkSync } = require('fs');
-const path = require('path');
+import { chmodSync, existsSync, mkdirSync, writeFileSync, unlinkSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..');
 const binDir = path.join(projectRoot, 'node_modules', '.bin');
 const wrapperRel = path.relative(binDir, path.join(__dirname, 'next-wrapper.js'));

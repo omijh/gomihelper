@@ -1,6 +1,7 @@
 {
   "name": "gomihelper",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,6 +12,7 @@
     "postinstall": "node scripts/setup-next-export.js"
   },
   "dependencies": {
+    "cheerio": "^1.2.0",
     "next": "^16.0.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -19,6 +21,7 @@
   "devDependencies": {
     "@types/node": "^20.12.12",
     "@types/react": "^18.2.66",
+    "baseline-browser-mapping": "^2.10.34",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.0",
     "ts-node": "^10.9.2",

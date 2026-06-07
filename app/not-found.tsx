@@ -1,12 +1,15 @@
-import Link from "next/link";
+import Link from 'next/link';
+import styles from './not-found.module.css';
 
 export default function NotFound() {
   return (
-    <main style={{ maxWidth: 860, margin: "40px auto", padding: "0 16px", textAlign: "center" }}>
-      <h1 style={{ marginBottom: 16 }}>Page not found</h1>
-      <p>
-        Try going back to <Link href="/">gomihelper.com</Link>.
-      </p>
+    <main className={styles.page}>
+      <div className={styles.card}>
+        <img src="/racoon-mascot.png" alt="Raccoon mascot" className={styles.raccoon} width="160" height="160" />
+        <h1 className={styles.code}>404</h1>
+        <p className={styles.msg}>Even the raccoons couldn&apos;t find this page.</p>
+        <Link href="/" className={styles.link}>Back to GomiHelper</Link>
+      </div>
     </main>
   );
 }

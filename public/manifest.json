@@ -1,0 +1,12 @@
+{
+  "name": "GomiHelper",
+  "short_name": "GomiHelper",
+  "description": "Trash day & bulky-item fee lookups for Tokyo wards",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#5b6ef5",
+  "icons": [
+    { "src": "/raccoon-favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

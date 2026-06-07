@@ -1,7 +1,10 @@
 #!/usr/bin/env node
-const { cpSync, existsSync, rmSync } = require('fs');
-const path = require('path');
-const { spawnSync } = require('child_process');
+import { cpSync, existsSync, rmSync } from 'fs';
+import path from 'path';
+import { spawnSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const args = process.argv.slice(2);
 const projectRoot = path.join(__dirname, '..');

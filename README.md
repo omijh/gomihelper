@@ -25,9 +25,8 @@ The site deploys automatically from the `main` branch via `.github/workflows/pag
 4. Configure the required DNS records at your registrar following the [GitHub Pages custom domain guide](https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site).
 
 ## Weekly data updates
-A disabled workflow is included at `.github/workflows/weekly-data.yml`.  
-- To enable, remove `if: ${{ false }}` and uncomment the cron schedule.  
-- Update script: `scripts/update-data.ts` (stub).
+Data is refreshed weekly via the `schedule` trigger in `.github/workflows/pages.yml`.  
+Update script: `scripts/update-data.ts`.
 
 ## Data model
 - See `public/data/schema.json`. Samples under `public/data/samples/`.
