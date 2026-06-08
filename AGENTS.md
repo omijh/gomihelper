@@ -1,7 +1,7 @@
 # GomiHelper — Agent Guide
 
 ## Project overview
-Next.js 16 static site providing trash schedule lookup for Tokyo wards. Data sourced from the Tokyo Open Data API, ward website CSVs, HTML table scraping, and XLSX files. 18 areas: 15 special wards + 3 cities.
+Next.js 16 static site providing trash schedule lookup for Tokyo wards. Data sourced from the Tokyo Open Data API, ward website CSVs, HTML table scraping, and XLSX files. 26 areas: all 23 special wards + 3 cities.
 
 ## Commands
 - `npm run dev` — dev server (localhost:3000)
@@ -65,7 +65,7 @@ Dataset index (`public/data/index.json`):
 ## Data sources
 Base URL: `https://service.api.metro.tokyo.lg.jp`
 
-### Ward / City data sources (18 areas)
+### Ward / City data sources (26 areas)
 | Ward / City | Source | Type |
 |------|--------|------|
 | Chuo-ku | `t131024d...` | API |
@@ -84,6 +84,14 @@ Base URL: `https://service.api.metro.tokyo.lg.jp`
 | Edogawa-ku | [HTML](https://www.city.edogawa.tokyo.jp/e025/kurashi/gomi_recycle/kategomi/yobihyo.html) (6 tables) | HTML |
 | Arakawa-ku | [HTML](https://www.city.arakawa.tokyo.jp/a025/recycle/shuushuubi/syusyubi.html) | HTML |
 | Ota-ku | [XLSX](https://www.opendata.metro.tokyo.lg.jp/ootaku/131113_shigengomiyoubi.xlsx) | XLSX |
+| Chiyoda-ku | [HTML/PDF](https://www.city.chiyoda.lg.jp/koho/kurashi/gomi/wakekata/index.html) | custom verified sample |
+| Minato-ku | [HTML/PDF](https://www.city.minato.tokyo.jp/unei/2025gomikarenda.html) | custom verified sample |
+| Meguro-ku | [HTML/PDF](https://www.city.meguro.tokyo.jp/seisou/kurashi/gomi/youbiichiran.html) | custom verified sample |
+| Shibuya-ku | [HTML](https://www.city.shibuya.tokyo.jp/kurashi/gomi/kateigomi/gomid.html) | custom verified sample |
+| Toshima-ku | [HTML/PDF / さんあ〜る](https://www.city.toshima.lg.jp/150/kurashi/gomi/shigen/2303021832.html) | custom verified sample |
+| Kita-ku | [HTML/PDF](https://www.city.kita.lg.jp/living/bins/1002013/1002014.html) | custom verified sample |
+| Itabashi-ku | [HTML](https://www.city.itabashi.tokyo.jp/tetsuduki/gomi/kaishu/1038152.html) | custom verified sample |
+| Katsushika-ku | [HTML/PDF](https://www.city.katsushika.lg.jp/kurashi/1000048/1017199/1020038.html) | custom verified sample |
 | Tachikawa | [HTML](https://www.city.tachikawa.lg.jp/kurashi/gomi/1001716/1027202/1027203.html) (4 areas) | HTML |
 | Higashikurume | [HTML](https://www.city.higashikurume.lg.jp/kurashi/kankyo/shigen/1018874/1000817.html) (2 areas) | HTML |
 
@@ -126,8 +134,7 @@ Wards use one of four data source types:
 ## Current limitations
 - Schedule data uses the first neighborhood's schedule from each ward's data source as a representative sample
 - "1st and 3rd Thursday" style patterns are simplified to just "Thu"
-- Only 7 of 23 special wards have live schedule APIs; 9 more added via CSV/HTML/XLSX
-- 8 special wards have no machine-readable data (Chiyoda, Minato, Meguro, Shibuya, Toshima, Kita, Itabashi, Katsushika)
+- Only 7 of 23 special wards have live schedule APIs; the rest are added via CSV/HTML/XLSX or official-page/PDF verified representative samples
 - Suginami-ku CSV data covers grouped areas (e.g., "阿佐谷北1～6丁目") — first row used as sample
 - Sumida-ku data is from 2015 (API not updated since)
 - Ota-ku XLSX has complex merged-cell layout; first area group used as sample

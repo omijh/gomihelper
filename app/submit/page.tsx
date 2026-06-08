@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useState } from 'react';
 import styles from './submit.module.css';
 
@@ -147,8 +148,8 @@ export default function SubmitPage() {
       <div className={styles.surface}>
         <header className={styles.header}>
           <div className={styles.brand}>
-            <a href="/" className={styles.brandLink}><span className={styles.logo}>{'\u{1F99D}'}</span>
-            <span className={styles.title}>GomiHelper</span></a>
+            <Link href="/" className={styles.brandLink}><span className={styles.logo}>{'\u{1F99D}'}</span>
+            <span className={styles.title}>GomiHelper</span></Link>
           </div>
           <div className={styles.langSwitch}>
             <button
