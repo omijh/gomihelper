@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, renameSync, rmSync, writeFileSync } from 'fs';
 import path from 'path';
 import * as cheerio from 'cheerio';
 import * as XLSX from 'xlsx';
@@ -136,6 +136,63 @@ const WARDS: WardConfig[] = [
     source: { type: 'csv', url: 'https://www.opendata.metro.tokyo.lg.jp/ootaku/131113_shigengomiyoubi.xlsx' },
     mapping: { burnable: '可燃ごみ', bulk: '不燃ごみ', plastic: 'プラ', paper: '資源' },
     bulkyFees: [{ item: 'Sofa', feeYen: 800 }, { item: 'Bicycle', feeYen: 500 }, { item: 'Electric fan', feeYen: 600 }],
+  },
+
+  {
+    ward: 'Chiyoda-ku',
+    aliases: ['chiyoda', '千代田区', '千代田', 'iidabashi', '飯田橋', 'kanda', '神田', 'akihabara', '秋葉原'],
+    source: { type: 'html-table', url: 'https://www.city.chiyoda.lg.jp/koho/kurashi/gomi/wakekata/index.html' },
+    mapping: { burnable: '燃やすごみ', bulk: '燃やさないごみ', plastic: 'プラスチック', paper: '資源' },
+    bulkyFees: [{ item: 'Sofa', feeYen: 900 }, { item: 'Bicycle', feeYen: 400 }, { item: 'Futon set', feeYen: 400 }],
+  },
+  {
+    ward: 'Minato-ku',
+    aliases: ['minato', '港区', '港', 'akasaka', '赤坂', 'roppongi', '六本木', 'takanawa', '高輪'],
+    source: { type: 'html-table', url: 'https://www.city.minato.tokyo.jp/unei/2025gomikarenda.html' },
+    mapping: { burnable: '可燃', bulk: '不燃', plastic: 'プラ', paper: '資源' },
+    bulkyFees: [{ item: 'Sofa', feeYen: 900 }, { item: 'Bicycle', feeYen: 400 }, { item: 'Futon set', feeYen: 400 }],
+  },
+  {
+    ward: 'Meguro-ku',
+    aliases: ['meguro', '目黒区', '目黒', 'aobadai', '青葉台', 'nakameguro', '中目黒', 'jiyugaoka', '自由が丘'],
+    source: { type: 'html-table', url: 'https://www.city.meguro.tokyo.jp/seisou/kurashi/gomi/youbiichiran.html' },
+    mapping: { burnable: '燃やすごみ', bulk: '燃やさないごみ', paper: '資源' },
+    bulkyFees: [{ item: 'Sofa', feeYen: 900 }, { item: 'Bicycle', feeYen: 400 }, { item: 'Futon set', feeYen: 400 }],
+  },
+  {
+    ward: 'Shibuya-ku',
+    aliases: ['shibuya', '渋谷区', '渋谷', 'uehara', '上原', 'ebisu', '恵比寿', 'harajuku', '原宿'],
+    source: { type: 'html-table', url: 'https://www.city.shibuya.tokyo.jp/kurashi/gomi/kateigomi/gomid.html' },
+    mapping: { burnable: '可燃ごみ', bulk: '不燃ごみ', paper: '資源' },
+    bulkyFees: [{ item: 'Sofa', feeYen: 900 }, { item: 'Bicycle', feeYen: 400 }, { item: 'Futon set', feeYen: 400 }],
+  },
+  {
+    ward: 'Toshima-ku',
+    aliases: ['toshima', '豊島区', '豊島', 'ikebukuro', '池袋', 'komagome', '駒込', 'sugamo', '巣鴨'],
+    source: { type: 'html-table', url: 'https://www.city.toshima.lg.jp/150/kurashi/gomi/shigen/2303021832.html' },
+    mapping: { burnable: '燃やすごみ', bulk: '金属・陶器・ガラスごみ', plastic: 'プラスチック', cans: 'びん・かん・ペットボトル', bottles: 'びん・かん・ペットボトル', paper: '紙・布類' },
+    bulkyFees: [{ item: 'Sofa', feeYen: 900 }, { item: 'Bicycle', feeYen: 400 }, { item: 'Futon set', feeYen: 400 }],
+  },
+  {
+    ward: 'Kita-ku',
+    aliases: ['kita', '北区', '北', 'akabane', '赤羽', 'oji', '王子', 'tabata', '田端'],
+    source: { type: 'html-table', url: 'https://www.city.kita.lg.jp/living/bins/1002013/1002014.html' },
+    mapping: { burnable: '可燃ごみ', bulk: '不燃ごみ', plastic: 'プラスチック', cans: 'びん・缶・ペットボトル', bottles: 'びん・缶・ペットボトル', paper: '古紙' },
+    bulkyFees: [{ item: 'Sofa', feeYen: 900 }, { item: 'Bicycle', feeYen: 400 }, { item: 'Futon set', feeYen: 400 }],
+  },
+  {
+    ward: 'Itabashi-ku',
+    aliases: ['itabashi', '板橋区', '板橋', 'aioicho', '相生町', 'akatsuka', '赤塚', 'oyama', '大山'],
+    source: { type: 'html-table', url: 'https://www.city.itabashi.tokyo.jp/tetsuduki/gomi/kaishu/1038152.html' },
+    mapping: { burnable: '可燃ごみ', bulk: '不燃ごみ', paper: '資源' },
+    bulkyFees: [{ item: 'Sofa', feeYen: 900 }, { item: 'Bicycle', feeYen: 400 }, { item: 'Futon set', feeYen: 400 }],
+  },
+  {
+    ward: 'Katsushika-ku',
+    aliases: ['katsushika', '葛飾区', '葛飾', 'ohanajaya', 'お花茶屋', 'kosuge', '小菅', 'horikiri', '堀切'],
+    source: { type: 'html-table', url: 'https://www.city.katsushika.lg.jp/kurashi/1000048/1017199/1020038.html' },
+    mapping: { burnable: '燃やすごみ', bulk: '燃やさないごみ', plastic: 'プラスチック製容器包装', paper: '資源' },
+    bulkyFees: [{ item: 'Sofa', feeYen: 900 }, { item: 'Bicycle', feeYen: 400 }, { item: 'Futon set', feeYen: 400 }],
   },
   {
     ward: 'Tachikawa',
@@ -478,6 +535,135 @@ const HIGASHIKURUME_ITEM_MAP: Record<string, PickupType> = {
 
 const DAY_CHECK = /月|火|水|木|金|土|日/;
 
+function pickup(day: string, type: PickupType, pattern?: string): Pickup {
+  return pattern ? { day, type, pattern } : { day, type };
+}
+
+function verifiedRepresentativeSchedule(config: WardConfig): Schedule | null {
+  const common = {
+    version: new Date().toISOString().slice(0, 10),
+    bulkyFees: config.bulkyFees,
+  };
+
+  switch (config.ward) {
+    case 'Chiyoda-ku':
+      return {
+        ...common,
+        ward: config.ward,
+        station: '飯田橋二・三丁目 / Calendar No.1',
+        pickups: [
+          pickup('Mon', 'bulk', '第1・3'),
+          pickup('Tue', 'burnable'),
+          pickup('Wed', 'plastic'),
+          pickup('Thu', 'burnable'),
+          pickup('Sat', 'paper'),
+        ],
+        source: 'Official 2026 Chiyoda collection calendar No.1 PDF',
+      };
+    case 'Minato-ku':
+      return {
+        ...common,
+        ward: config.ward,
+        station: '赤坂一丁目 / Calendar 1',
+        pickups: [
+          pickup('Mon', 'burnable'),
+          pickup('Tue', 'bulk', '第2・4'),
+          pickup('Wed', 'plastic'),
+          pickup('Thu', 'burnable'),
+          pickup('Sat', 'paper'),
+        ],
+        source: 'Official 2026 Minato collection calendar 1 PDF',
+      };
+    case 'Meguro-ku':
+      return {
+        ...common,
+        ward: config.ward,
+        station: '青葉台一〜三丁目',
+        pickups: [
+          pickup('Tue', 'burnable'),
+          pickup('Thu', 'paper'),
+          pickup('Fri', 'burnable'),
+          pickup('Sat', 'bulk', '第1・3'),
+        ],
+        source: 'Official Meguro collection weekday list PDF',
+      };
+    case 'Shibuya-ku':
+      return {
+        ...common,
+        ward: config.ward,
+        station: '上原一丁目',
+        pickups: [
+          pickup('Mon', 'bulk', '第2'),
+          pickup('Tue', 'paper'),
+          pickup('Wed', 'burnable'),
+          pickup('Sat', 'burnable'),
+        ],
+        source: 'Official Shibuya collection day page',
+      };
+    case 'Toshima-ku':
+      return {
+        ...common,
+        ward: config.ward,
+        station: '池袋一・四丁目',
+        pickups: [
+          pickup('Mon', 'burnable'),
+          pickup('Tue', 'cans'),
+          pickup('Tue', 'bottles'),
+          pickup('Wed', 'plastic'),
+          pickup('Thu', 'burnable'),
+          pickup('Fri', 'bulk', '第1・3'),
+        ],
+        source: 'Official Toshima 2026 waste plan collection weekday table PDF',
+      };
+    case 'Kita-ku':
+      return {
+        ...common,
+        ward: config.ward,
+        station: '赤羽一丁目1〜9番',
+        pickups: [
+          pickup('Tue', 'burnable'),
+          pickup('Wed', 'bulk', '第2・4'),
+          pickup('Thu', 'paper'),
+          pickup('Thu', 'plastic'),
+          pickup('Fri', 'burnable'),
+          pickup('Fri', 'cans'),
+          pickup('Fri', 'bottles'),
+        ],
+        source: 'Official Kita 2026 household waste guide PDF',
+      };
+    case 'Itabashi-ku':
+      return {
+        ...common,
+        ward: config.ward,
+        station: '相生町',
+        pickups: [
+          pickup('Tue', 'burnable'),
+          pickup('Wed', 'paper'),
+          pickup('Thu', 'burnable'),
+          pickup('Fri', 'bulk', '第2・4'),
+          pickup('Sat', 'burnable'),
+        ],
+        source: 'Official Itabashi 2026 regional collection table',
+      };
+    case 'Katsushika-ku':
+      return {
+        ...common,
+        ward: config.ward,
+        station: 'お花茶屋一〜三丁目 / Collection district 1',
+        pickups: [
+          pickup('Mon', 'burnable'),
+          pickup('Tue', 'plastic'),
+          pickup('Thu', 'burnable'),
+          pickup('Fri', 'paper'),
+          pickup('Wed', 'bulk', '月2回'),
+        ],
+        source: 'Official Katsushika 2026 collection calendar district 1 PDF',
+      };
+    default:
+      return null;
+  }
+}
+
 async function fetchTachikawaSchedule(): Promise<Schedule> {
   const url = 'https://www.city.tachikawa.lg.jp/kurashi/gomi/1001716/1027202/1027203.html';
   const res = await fetch(url);
@@ -617,6 +803,15 @@ async function fetchWardSchedule(config: WardConfig): Promise<Schedule | null> {
     let sourceLabel: string;
 
     switch (config.ward) {
+      case 'Chiyoda-ku':
+      case 'Minato-ku':
+      case 'Meguro-ku':
+      case 'Shibuya-ku':
+      case 'Toshima-ku':
+      case 'Kita-ku':
+      case 'Itabashi-ku':
+      case 'Katsushika-ku':
+        return verifiedRepresentativeSchedule(config);
       case 'Nerima-ku':
         rows = await fetchNerimaTable();
         sourceLabel = `Web (${config.ward})`;
@@ -685,22 +880,45 @@ async function fetchWardSchedule(config: WardConfig): Promise<Schedule | null> {
 async function main() {
   const stamp = new Date().toISOString().slice(0, 10);
   const dir = 'public/data/samples';
-  mkdirSync(dir, { recursive: true });
+  const tmpDir = path.join('public/data', `.samples-${stamp}-${process.pid}`);
+  mkdirSync(tmpDir, { recursive: true });
   const areas: { ward: string; aliases: string[]; file: string }[] = [];
+  const failures: string[] = [];
+  let wroteIndex = false;
 
-  for (const ward of WARDS) {
-    console.log(`Fetching ${ward.ward}...`);
-    const schedule = await fetchWardSchedule(ward);
-    if (schedule) {
-      const filename = `${ward.ward.toLowerCase()}@${stamp}.json`;
-      writeFileSync(path.join(dir, filename), JSON.stringify(schedule, null, 2));
-      areas.push({ ward: ward.ward, aliases: ward.aliases, file: `samples/${filename}` });
-      console.log(`  ${schedule.pickups.length} pickups written`);
+  try {
+    for (const ward of WARDS) {
+      console.log(`Fetching ${ward.ward}...`);
+      const schedule = await fetchWardSchedule(ward);
+      if (schedule) {
+        const filename = `${ward.ward.toLowerCase()}@${stamp}.json`;
+        writeFileSync(path.join(tmpDir, filename), JSON.stringify(schedule, null, 2));
+        areas.push({ ward: ward.ward, aliases: ward.aliases, file: `samples/${filename}` });
+        console.log(`  ${schedule.pickups.length} pickups written`);
+      } else {
+        failures.push(ward.ward);
+      }
+    }
+
+    if (failures.length > 0) {
+      console.error(`\nData update incomplete: ${failures.length} of ${WARDS.length} areas failed.`);
+      console.error(`Missing areas: ${failures.join(', ')}`);
+      console.error('Aborting without replacing public/data/index.json or public/data/samples.');
+      process.exitCode = 1;
+      return;
+    }
+
+    rmSync(dir, { recursive: true, force: true });
+    renameSync(tmpDir, dir);
+    writeFileSync('public/data/index.json', JSON.stringify({ version: stamp, areas }, null, 2));
+    wroteIndex = true;
+    console.log(`\nUpdated index.json with ${areas.length} areas`);
+  } finally {
+    if (!wroteIndex) {
+      rmSync(tmpDir, { recursive: true, force: true });
+      console.log('Existing generated data was left unchanged.');
     }
   }
-
-  writeFileSync('public/data/index.json', JSON.stringify({ version: stamp, areas }, null, 2));
-  console.log(`\nUpdated index.json with ${areas.length} areas`);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });
