@@ -110,6 +110,94 @@ const TYPE_DESCRIPTIONS: Record<Lang, Record<PickupType, string>> = {
 
 const DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+const DAY_LABELS: Record<Lang, Record<string, string>> = {
+  en: { Mon: 'Mon', Tue: 'Tue', Wed: 'Wed', Thu: 'Thu', Fri: 'Fri', Sat: 'Sat', Sun: 'Sun' },
+  ja: { Mon: '月', Tue: '火', Wed: '水', Thu: '木', Fri: '金', Sat: '土', Sun: '日' },
+};
+
+const AREA_JA_NAMES: Record<string, string> = {
+  'Chuo-ku': '中央区',
+  'Bunkyo-ku': '文京区',
+  'Nakano-ku': '中野区',
+  'Koto-ku': '江東区',
+  'Sumida-ku': '墨田区',
+  'Shinagawa-ku': '品川区',
+  'Taito-ku': '台東区',
+  'Kiyose-shi': '清瀬市',
+  'Suginami-ku': '杉並区',
+  'Adachi-ku': '足立区',
+  'Nerima-ku': '練馬区',
+  'Shinjuku-ku': '新宿区',
+  'Setagaya-ku': '世田谷区',
+  'Edogawa-ku': '江戸川区',
+  'Arakawa-ku': '荒川区',
+  'Ota-ku': '大田区',
+  'Chiyoda-ku': '千代田区',
+  'Minato-ku': '港区',
+  'Meguro-ku': '目黒区',
+  'Shibuya-ku': '渋谷区',
+  'Toshima-ku': '豊島区',
+  'Kita-ku': '北区',
+  'Itabashi-ku': '板橋区',
+  'Katsushika-ku': '葛飾区',
+  Tachikawa: '立川市',
+  Higashikurume: '東久留米市',
+};
+
+const EXTRA_AREA_ALIASES: Record<string, string[]> = {
+  'Chuo-ku': ['ちゅうおうく', 'チュウオウク', 'ちゅうおう'],
+  'Bunkyo-ku': ['ぶんきょうく', 'ブンキョウク', 'ぶんきょう'],
+  'Nakano-ku': ['なかのく', 'ナカノク', 'なかの'],
+  'Koto-ku': ['こうとうく', 'コウトウク', 'こうとう'],
+  'Sumida-ku': ['すみだく', 'スミダク', 'すみだ'],
+  'Shinagawa-ku': ['しながわく', 'シナガワク', 'しながわ'],
+  'Taito-ku': ['たいとうく', 'タイトウク', 'たいとう'],
+  'Kiyose-shi': ['きよせし', 'キヨセシ', 'きよせ'],
+  'Suginami-ku': ['すぎなみく', 'スギナミク', 'すぎなみ'],
+  'Adachi-ku': ['あだちく', 'アダチク', 'あだち'],
+  'Nerima-ku': ['ねりまく', 'ネリマク', 'ねりま'],
+  'Shinjuku-ku': ['しんじゅくく', 'シンジュクク', 'しんじゅく'],
+  'Setagaya-ku': ['せたがやく', 'セタガヤク', 'せたがや'],
+  'Edogawa-ku': ['えどがわく', 'エドガワク', 'えどがわ'],
+  'Arakawa-ku': ['あらかわく', 'アラカワク', 'あらかわ'],
+  'Ota-ku': ['おおたく', 'オオタク', 'おおた'],
+  'Chiyoda-ku': ['ちよだく', 'チヨダク', 'ちよだ'],
+  'Minato-ku': ['みなとく', 'ミナトク', 'みなと'],
+  'Meguro-ku': ['めぐろく', 'メグロク', 'めぐろ'],
+  'Shibuya-ku': ['しぶやく', 'シブヤク', 'しぶや'],
+  'Toshima-ku': ['としまく', 'トシマク', 'としま'],
+  'Kita-ku': ['きたく', 'キタク', 'きた'],
+  'Itabashi-ku': ['いたばしく', 'イタバシク', 'いたばし'],
+  'Katsushika-ku': ['かつしかく', 'カツシカク', 'かつしか'],
+  Tachikawa: ['たちかわし', 'タチカワシ', 'たちかわ'],
+  Higashikurume: ['ひがしくるめし', 'ヒガシクルメシ', 'ひがしくるめ'],
+};
+
+const BULKY_FEE_TRANSLATIONS: Record<string, string> = {
+  'Sofa (2-seat)': 'ソファ（2人掛け）',
+  'Sofa': 'ソファ',
+  'Bicycle': '自転車',
+  'Futon set': '布団一式',
+  'Small chair': '小型いす',
+  'Electric fan': '扇風機',
+  'Tatami mat': '畳',
+  'Desk (small)': '机（小型）',
+  'Washing machine': '洗濯機',
+  Bookshelf: '本棚',
+  Futon: '布団',
+  Desk: '机',
+  'Electric kotatsu': '電気こたつ',
+  'Large furniture': '大型家具',
+  'Small furniture': '小型家具',
+};
+
+const BULKY_NOTE_TRANSLATIONS: Record<string, string> = {
+  'per mat': '1枚あたり',
+  'under 15kg': '15kg未満',
+  'over 50cm': '50cm超',
+  'under 50cm': '50cm未満',
+};
+
 const TYPE_TO_STYLE: Record<PickupType, string> = {
   burnable: styles.typeBadgeBurnable,
   plastic: styles.typeBadgePlastic,
@@ -226,7 +314,37 @@ export default function Home() {
 
   const t = (key: string) => STRINGS[lang][key] || key;
 
-  const normalize = (s: string) => s.toLowerCase().replace(/[ー−]/g, '').trim();
+  const normalize = (s: string) =>
+    s
+      .normalize('NFKC')
+      .toLowerCase()
+      .replace(/[ァ-ン]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60))
+      .replace(/東京都|東京|市区町村|[\s\-ー−・.。,_]/g, '')
+      .trim();
+
+  const getAreaTerms = (area: AreaEntry) => [
+    area.ward,
+    area.ward.replace(/-(ku|shi)$/i, ''),
+    AREA_JA_NAMES[area.ward],
+    AREA_JA_NAMES[area.ward]?.replace(/[区市]$/, ''),
+    ...(EXTRA_AREA_ALIASES[area.ward] ?? []),
+    ...area.aliases,
+  ].filter(Boolean);
+
+  const areaMatches = (area: AreaEntry, value: string, exact = false) => {
+    const norm = normalize(value);
+    return getAreaTerms(area).some((term) => {
+      const normalizedTerm = normalize(term);
+      return exact ? normalizedTerm === norm : fuzzyMatch(norm, normalizedTerm);
+    });
+  };
+
+  const formatAreaName = (ward: string) => (lang === 'ja' ? AREA_JA_NAMES[ward] ?? ward : ward);
+  const formatBulkyItem = (item: string) => (lang === 'ja' ? BULKY_FEE_TRANSLATIONS[item] ?? item : item);
+  const formatBulkyNote = (notes?: string) => {
+    if (!notes) return '\u2014';
+    return lang === 'ja' ? BULKY_NOTE_TRANSLATIONS[notes] ?? notes : notes;
+  };
 
   const searchByMatch = async (match: AreaEntry) => {
     setLoading(true);
@@ -255,9 +373,8 @@ export default function Home() {
 
   const searchByWardName = (wardName: string): boolean => {
     if (!indexRef.current) return false;
-    const norm = normalize(wardName);
     const match = indexRef.current.find((a) =>
-      a.aliases.some((alias) => normalize(alias) === norm),
+      areaMatches(a, wardName, true),
     );
     if (!match) return false;
     searchByMatch(match);
@@ -304,9 +421,8 @@ export default function Home() {
     if (!q || !indexRef.current) return;
     setGeoError('');
     setSuggestions([]);
-    const norm = normalize(q);
     const match = indexRef.current.find((a) =>
-      a.aliases.some((alias) => fuzzyMatch(norm, alias)),
+      areaMatches(a, q),
     );
     if (!match) {
       setNotFound(true);
@@ -356,10 +472,9 @@ export default function Home() {
                   const v = e.target.value;
                   setQuery(v);
                   if (v.trim().length >= 1 && indexRef.current) {
-                    const normed = normalize(v);
                     setSuggestions(
                       indexRef.current.filter((a) =>
-                        a.aliases.some((alias) => fuzzyMatch(normed, alias)),
+                        areaMatches(a, v),
                       ).slice(0, 6),
                     );
                   } else {
@@ -383,9 +498,9 @@ export default function Home() {
                     className={styles.suggestionItem}
                     onMouseDown={(e) => { e.preventDefault(); selectSuggestion(area); }}
                   >
-                    <span className={styles.suggestionItemEm}>{area.ward}</span>
+                    <span className={styles.suggestionItemEm}>{formatAreaName(area.ward)}</span>
                     <span className={styles.suggestionAliases}>
-                      {area.aliases.slice(1, 4).join(', ')}
+                      {getAreaTerms(area).filter((term) => term !== area.ward && term !== AREA_JA_NAMES[area.ward]).slice(0, 3).join(', ')}
                     </span>
                   </button>
                 ))}
@@ -432,7 +547,7 @@ export default function Home() {
         {data && !loading && (
           <div className={styles.result}>
             <div className={styles.resultHeader}>
-              <h2>{data.ward}{data.station ? ` · ${data.station}` : ''}</h2>
+              <h2>{formatAreaName(data.ward)}{data.station ? ` · ${data.station}` : ''}</h2>
               <span className={styles.datasetTag}>
                 {t('lastUpdated')}: {data.version}
               </span>
@@ -476,7 +591,7 @@ export default function Home() {
                         key={day}
                         className={`${styles.calendarDay} ${isToday ? styles.calendarDayToday : ''}`}
                       >
-                        <div className={styles.calendarDayName}>{day}</div>
+                        <div className={styles.calendarDayName}>{DAY_LABELS[lang][day]}</div>
                         {pickups.length > 0 ? pickups.map((p) => (
                           <span
                             key={p.type}
@@ -512,9 +627,9 @@ export default function Home() {
                   <tbody>
                     {data.bulkyFees.map((fee, index) => (
                       <tr key={`${fee.item}-${index}`}>
-                        <td>{fee.item}</td>
+                        <td>{formatBulkyItem(fee.item)}</td>
                         <td>{'\u00A5'}{fee.feeYen.toLocaleString(lang === 'ja' ? 'ja-JP' : 'en-US')}</td>
-                        <td>{fee.notes ?? '\u2014'}</td>
+                        <td>{formatBulkyNote(fee.notes)}</td>
                       </tr>
                     ))}
                   </tbody>
