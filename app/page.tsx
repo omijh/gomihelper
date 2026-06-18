@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { areaMatches, findBestAreaMatch, rankAreaSuggestions } from './area-search';
 import styles from './page.module.css';
 
 type Lang = 'en' | 'ja';
@@ -34,7 +35,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     bulkyFees: 'Bulky-item fees',
     feedback: 'Feedback',
     code: 'Code: MIT · Data: CC BY 4.0',
-    hint: 'Try Chuo, Bunkyo, Taito, Nakano\u2026',
+    hint: 'Try Chuo, Bunkyo, Saitama, Nakano\u2026',
     loading: 'Loading\u2026',
     lastUpdated: 'Last updated',
     emptyState: 'Start by searching for your area.',
@@ -48,14 +49,14 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     feesHeaderNotes: 'Notes',
   },
   ja: {
-    placeholder: '区名を検索...',
+    placeholder: '市区町村を検索...',
     search: '検索',
     datasetVersion: 'データ版',
     weeklyPickups: '週間の収集',
     bulkyFees: '粗大ごみ料金',
     feedback: 'ご意見',
     code: 'コード: MIT · データ: CC BY 4.0',
-    hint: '例：中央区、文京区、台東区、中野区',
+    hint: '例：中央区、文京区、さいたま市、中野区',
     loading: '読み込み中…',
     lastUpdated: '最終更新日',
     emptyState: 'お住まいの地域を検索してください。',
@@ -142,6 +143,7 @@ const AREA_JA_NAMES: Record<string, string> = {
   'Katsushika-ku': '葛飾区',
   Tachikawa: '立川市',
   Higashikurume: '東久留米市',
+  'Saitama-shi': 'さいたま市',
 };
 
 const EXTRA_AREA_ALIASES: Record<string, string[]> = {
@@ -171,6 +173,7 @@ const EXTRA_AREA_ALIASES: Record<string, string[]> = {
   'Katsushika-ku': ['かつしかく', 'カツシカク', 'かつしか'],
   Tachikawa: ['たちかわし', 'タチカワシ', 'たちかわ'],
   Higashikurume: ['ひがしくるめし', 'ヒガシクルメシ', 'ひがしくるめ'],
+  'Saitama-shi': ['さいたまし', 'サイタマシ', 'さいたま', 'いわつきく', 'イワツキク', 'いわつき'],
 };
 
 const BULKY_FEE_TRANSLATIONS: Record<string, string> = {
@@ -189,6 +192,9 @@ const BULKY_FEE_TRANSLATIONS: Record<string, string> = {
   'Electric kotatsu': '電気こたつ',
   'Large furniture': '大型家具',
   'Small furniture': '小型家具',
+  'Oversized item collection': '粗大ごみ戸別収集',
+  'Spring mattress': 'スプリング入りマットレス',
+  'Spring sofa': 'スプリング入りソファ',
 };
 
 const BULKY_NOTE_TRANSLATIONS: Record<string, string> = {
@@ -196,6 +202,7 @@ const BULKY_NOTE_TRANSLATIONS: Record<string, string> = {
   'under 15kg': '15kg未満',
   'over 50cm': '50cm超',
   'under 50cm': '50cm未満',
+  'per item': '1品あたり',
 };
 
 const TYPE_TO_STYLE: Record<PickupType, string> = {
@@ -206,28 +213,6 @@ const TYPE_TO_STYLE: Record<PickupType, string> = {
   paper: styles.typeBadgePaper,
   bulk: styles.typeBadgeBulk,
 };
-
-function levenshtein(a: string, b: string): number {
-  const m = a.length, n = b.length;
-  const d: number[][] = [];
-  for (let i = 0; i <= m; i++) { d[i] = [i]; }
-  for (let j = 0; j <= n; j++) { d[0][j] = j; }
-  for (let j = 1; j <= n; j++) {
-    for (let i = 1; i <= m; i++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
-    }
-  }
-  return d[m][n];
-}
-
-function fuzzyMatch(query: string, target: string): boolean {
-  const q = query.toLowerCase().replace(/[ー−]/g, '');
-  const t = target.toLowerCase().replace(/[ー−]/g, '');
-  if (t.includes(q) || q.includes(t)) return true;
-  if (q.length < 2) return false;
-  return levenshtein(q, t) <= Math.max(1, Math.floor(q.length / 3));
-}
 
 export default function Home() {
   const [lang, setLang] = useState<Lang>('en');
@@ -314,14 +299,6 @@ export default function Home() {
 
   const t = (key: string) => STRINGS[lang][key] || key;
 
-  const normalize = (s: string) =>
-    s
-      .normalize('NFKC')
-      .toLowerCase()
-      .replace(/[ァ-ン]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60))
-      .replace(/東京都|東京|市区町村|[\s\-ー−・.。,_]/g, '')
-      .trim();
-
   const getAreaTerms = (area: AreaEntry) => [
     area.ward,
     area.ward.replace(/-(ku|shi)$/i, ''),
@@ -330,14 +307,6 @@ export default function Home() {
     ...(EXTRA_AREA_ALIASES[area.ward] ?? []),
     ...area.aliases,
   ].filter(Boolean);
-
-  const areaMatches = (area: AreaEntry, value: string, exact = false) => {
-    const norm = normalize(value);
-    return getAreaTerms(area).some((term) => {
-      const normalizedTerm = normalize(term);
-      return exact ? normalizedTerm === norm : fuzzyMatch(norm, normalizedTerm);
-    });
-  };
 
   const formatAreaName = (ward: string) => (lang === 'ja' ? AREA_JA_NAMES[ward] ?? ward : ward);
   const formatBulkyItem = (item: string) => (lang === 'ja' ? BULKY_FEE_TRANSLATIONS[item] ?? item : item);
@@ -374,7 +343,7 @@ export default function Home() {
   const searchByWardName = (wardName: string): boolean => {
     if (!indexRef.current) return false;
     const match = indexRef.current.find((a) =>
-      areaMatches(a, wardName, true),
+      areaMatches(a, wardName, getAreaTerms, true),
     );
     if (!match) return false;
     searchByMatch(match);
@@ -421,9 +390,7 @@ export default function Home() {
     if (!q || !indexRef.current) return;
     setGeoError('');
     setSuggestions([]);
-    const match = indexRef.current.find((a) =>
-      areaMatches(a, q),
-    );
+    const match = findBestAreaMatch(indexRef.current, q, getAreaTerms);
     if (!match) {
       setNotFound(true);
       return;
@@ -472,11 +439,7 @@ export default function Home() {
                   const v = e.target.value;
                   setQuery(v);
                   if (v.trim().length >= 1 && indexRef.current) {
-                    setSuggestions(
-                      indexRef.current.filter((a) =>
-                        areaMatches(a, v),
-                      ).slice(0, 6),
-                    );
+                    setSuggestions(rankAreaSuggestions(indexRef.current, v, getAreaTerms, 6));
                   } else {
                     setSuggestions([]);
                   }

@@ -1,7 +1,7 @@
 # GomiHelper — Agent Guide
 
 ## Project overview
-Next.js 16 static site providing trash schedule lookup for Tokyo wards. Data sourced from the Tokyo Open Data API, ward website CSVs, HTML table scraping, and XLSX files. 26 areas: all 23 special wards + 3 cities.
+Next.js 16 static site providing trash schedule lookup for Japanese municipalities. Data sourced from the Tokyo Open Data API, city/ward website CSVs, HTML table scraping, XLSX files, and official-page/PDF verified representative samples. 27 areas: all 23 Tokyo special wards + 4 cities.
 
 ## Commands
 - `npm run dev` — dev server (localhost:3000)
@@ -65,7 +65,7 @@ Dataset index (`public/data/index.json`):
 ## Data sources
 Base URL: `https://service.api.metro.tokyo.lg.jp`
 
-### Ward / City data sources (26 areas)
+### Ward / City data sources (27 areas)
 | Ward / City | Source | Type |
 |------|--------|------|
 | Chuo-ku | `t131024d...` | API |
@@ -94,6 +94,7 @@ Base URL: `https://service.api.metro.tokyo.lg.jp`
 | Katsushika-ku | [HTML/PDF](https://www.city.katsushika.lg.jp/kurashi/1000048/1017199/1020038.html) | custom verified sample |
 | Tachikawa | [HTML](https://www.city.tachikawa.lg.jp/kurashi/gomi/1001716/1027202/1027203.html) (4 areas) | HTML |
 | Higashikurume | [HTML](https://www.city.higashikurume.lg.jp/kurashi/kankyo/shigen/1018874/1000817.html) (2 areas) | HTML |
+| Saitama-shi | [HTML/PDF](https://www.city.saitama.lg.jp/001/006/010/003/p001912.html) | custom verified sample |
 
 Usage: `POST https://service.api.metro.tokyo.lg.jp/api/{apiId}/json?limit=100`
 Headers: `accept: application/json`, `Content-Type: application/json`
@@ -129,7 +130,7 @@ Wards use one of four data source types:
 - **Language toggle:** EN/JA stored in `localStorage` key `gh_lang`.
 - **Static export:** Generated into `out/`. GitHub Actions deploys via `.github/workflows/pages.yml`.
 - **`page.tsx` is a `'use client'` component** — client-side fetch for data, client-side state for language/location.
-- **Data sources**: Three types — `api` (Tokyo Open Data API), `csv` (ward website CSV), `html-table` (scraped HTML table from ward website). The `WardConfig.source` field determines which fetcher is used.
+- **Data sources**: Three types — `api` (Tokyo Open Data API), `csv` (city/ward website CSV), `html-table` (scraped HTML table from city/ward website). The `WardConfig.source` field determines which fetcher is used.
 
 ## Current limitations
 - Schedule data uses the first neighborhood's schedule from each ward's data source as a representative sample
@@ -140,4 +141,5 @@ Wards use one of four data source types:
 - Ota-ku XLSX has complex merged-cell layout; first area group used as sample
 - Tachikawa uses first of 4 area groups (富士見・柴崎・錦・羽衣町) as representative sample
 - Higashikurume uses east area (東地区) as representative sample
+- Saitama-shi uses Iwatsuki-ku Ainohara (岩槻区 相野原) from the official 2026 household waste manual as a representative sample
 - Column mapping supports `string | string[]` for wards where a type is split across columns (e.g., Sumida-ku burnable in two columns)
