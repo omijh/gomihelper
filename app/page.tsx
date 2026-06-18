@@ -34,7 +34,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     bulkyFees: 'Bulky-item fees',
     feedback: 'Feedback',
     code: 'Code: MIT · Data: CC BY 4.0',
-    hint: 'Try Chuo, Bunkyo, Taito, Nakano\u2026',
+    hint: 'Try Chuo, Bunkyo, Saitama, Nakano\u2026',
     loading: 'Loading\u2026',
     lastUpdated: 'Last updated',
     emptyState: 'Start by searching for your area.',
@@ -48,14 +48,14 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     feesHeaderNotes: 'Notes',
   },
   ja: {
-    placeholder: '区名を検索...',
+    placeholder: '市区町村を検索...',
     search: '検索',
     datasetVersion: 'データ版',
     weeklyPickups: '週間の収集',
     bulkyFees: '粗大ごみ料金',
     feedback: 'ご意見',
     code: 'コード: MIT · データ: CC BY 4.0',
-    hint: '例：中央区、文京区、台東区、中野区',
+    hint: '例：中央区、文京区、さいたま市、中野区',
     loading: '読み込み中…',
     lastUpdated: '最終更新日',
     emptyState: 'お住まいの地域を検索してください。',
@@ -142,6 +142,7 @@ const AREA_JA_NAMES: Record<string, string> = {
   'Katsushika-ku': '葛飾区',
   Tachikawa: '立川市',
   Higashikurume: '東久留米市',
+  'Saitama-shi': 'さいたま市',
 };
 
 const EXTRA_AREA_ALIASES: Record<string, string[]> = {
@@ -171,6 +172,7 @@ const EXTRA_AREA_ALIASES: Record<string, string[]> = {
   'Katsushika-ku': ['かつしかく', 'カツシカク', 'かつしか'],
   Tachikawa: ['たちかわし', 'タチカワシ', 'たちかわ'],
   Higashikurume: ['ひがしくるめし', 'ヒガシクルメシ', 'ひがしくるめ'],
+  'Saitama-shi': ['さいたまし', 'サイタマシ', 'さいたま', 'いわつきく', 'イワツキク', 'いわつき'],
 };
 
 const BULKY_FEE_TRANSLATIONS: Record<string, string> = {
@@ -189,6 +191,9 @@ const BULKY_FEE_TRANSLATIONS: Record<string, string> = {
   'Electric kotatsu': '電気こたつ',
   'Large furniture': '大型家具',
   'Small furniture': '小型家具',
+  'Oversized item collection': '粗大ごみ戸別収集',
+  'Spring mattress': 'スプリング入りマットレス',
+  'Spring sofa': 'スプリング入りソファ',
 };
 
 const BULKY_NOTE_TRANSLATIONS: Record<string, string> = {
@@ -196,6 +201,7 @@ const BULKY_NOTE_TRANSLATIONS: Record<string, string> = {
   'under 15kg': '15kg未満',
   'over 50cm': '50cm超',
   'under 50cm': '50cm未満',
+  'per item': '1品あたり',
 };
 
 const TYPE_TO_STYLE: Record<PickupType, string> = {

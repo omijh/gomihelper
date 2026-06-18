@@ -208,6 +208,17 @@ const WARDS: WardConfig[] = [
     mapping: { burnable: '燃やせるごみ', plastic: '容器包装プラスチック', bottles: 'PETボトル', cans: '缶', bulk: '燃やせないごみ', paper: '紙類' },
     bulkyFees: [{ item: 'Sofa', feeYen: 800 }, { item: 'Bicycle', feeYen: 500 }, { item: 'Electric fan', feeYen: 600 }],
   },
+  {
+    ward: 'Saitama-shi',
+    aliases: ['saitama', 'saitama-shi', 'さいたま市', 'さいたま', '埼玉市', '埼玉', 'iwatsuki', '岩槻区', '岩槻'],
+    source: { type: 'html-table', url: 'https://www.city.saitama.lg.jp/001/006/010/003/p001912.html' },
+    mapping: { burnable: '燃', bulk: '不燃', paper: '資2', plastic: '資1', cans: '資1', bottles: '資1' },
+    bulkyFees: [
+      { item: 'Oversized item collection', feeYen: 550, notes: 'per item' },
+      { item: 'Spring mattress', feeYen: 2200 },
+      { item: 'Spring sofa', feeYen: 2200 },
+    ],
+  },
 ];
 
 const DAY_MAP: Record<string, string> = {
@@ -659,6 +670,22 @@ function verifiedRepresentativeSchedule(config: WardConfig): Schedule | null {
         ],
         source: 'Official Katsushika 2026 collection calendar district 1 PDF',
       };
+    case 'Saitama-shi':
+      return {
+        ...common,
+        ward: config.ward,
+        station: '岩槻区 相野原',
+        pickups: [
+          pickup('Tue', 'burnable'),
+          pickup('Fri', 'burnable'),
+          pickup('Wed', 'bulk'),
+          pickup('Wed', 'paper'),
+          pickup('Thu', 'plastic'),
+          pickup('Thu', 'cans'),
+          pickup('Thu', 'bottles'),
+        ],
+        source: 'Official Saitama City 2026 household waste manual PDF',
+      };
     default:
       return null;
   }
@@ -811,6 +838,7 @@ async function fetchWardSchedule(config: WardConfig): Promise<Schedule | null> {
       case 'Kita-ku':
       case 'Itabashi-ku':
       case 'Katsushika-ku':
+      case 'Saitama-shi':
         return verifiedRepresentativeSchedule(config);
       case 'Nerima-ku':
         rows = await fetchNerimaTable();
