@@ -8,6 +8,7 @@
     "export": "next export -o out",
     "start": "npx serve out",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "test:search": "tsx scripts/search-matching.test.ts",
     "update:data": "tsx scripts/update-data.ts",
     "postinstall": "node scripts/setup-next-export.js"
   },
